@@ -129,8 +129,8 @@ def check_global_cooldown(command):
     print(f"Ejecutando comando {command}")
     return True
 
-# Función para crear y eliminar el archivo de comando
-def create_and_delete_file(command):
+# Función para crear el archivo de comando
+def create_file(command):
     directory = "sammicomandos"
     
     # Crear el directorio solo si no existe
@@ -143,10 +143,6 @@ def create_and_delete_file(command):
         with open(filename, 'w') as f:
             f.write(f"Comando {command} ejecutado.")  # Guardar información en el archivo
         print(f"Archivo creado: {filename}")
-        
-        # Esperar 4 segundos antes de eliminar el archivo en un hilo separado
-        threading.Timer(4, os.remove, args=[filename]).start()
-        print(f"Archivo será eliminado en 4 segundos: {filename}")
 
 # Función para manejar el cliente de TikTok
 def tiktok_client_thread(tiktok_client):
@@ -184,7 +180,7 @@ if __name__ == "__main__":
                 for word in comment.split():
                     if word.startswith("_"):
                         if check_global_cooldown(word):
-                            create_and_delete_file(word)  # Ejecutar el comando
+                            create_file(word)  # Ejecutar el comando
                         else:
                             print(f"Cooldown activo para {word}")
 
@@ -203,3 +199,4 @@ if __name__ == "__main__":
         root.mainloop()
     else:
         print("El archivo tiktokchannel.txt no se ha encontrado o está vacío.")
+
