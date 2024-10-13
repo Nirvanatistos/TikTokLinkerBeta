@@ -184,7 +184,9 @@ if __name__ == "__main__":
                 
                 # Leer el comentario limpio con TTS si TTS está habilitado
                 if tts_enabled and cleaned_comment.strip():
-                    engine.say(cleaned_comment)
+                    # Combina el nombre de usuario y el comentario para TTS
+                    tts_message = f"{username} dijo: {cleaned_comment}"
+                    engine.say(tts_message)
                     engine.runAndWait()
 
         client_thread = threading.Thread(target=tiktok_client_thread, args=(tiktok_client,))
