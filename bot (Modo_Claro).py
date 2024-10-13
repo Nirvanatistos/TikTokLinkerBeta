@@ -78,7 +78,7 @@ def display_chat_window():
     chat_frame.pack(expand=True, fill=tk.BOTH)
 
     # Título del chat
-    chat_label = tk.Label(chat_frame, text="TikTok Chat", bg="white", fg="black" , font=("Arial Black", 12, "bold"))
+    chat_label = tk.Label(chat_frame, text="TikTok Chat", bg="white", font=("Arial Black", 12, "bold"))
     chat_label.pack(pady=10, padx=10, anchor="w")
 
     # Crear el widget de texto para mostrar el chat
@@ -130,19 +130,14 @@ def check_global_cooldown(command):
     return True
 
 # Función para crear el archivo de comando
-def create_file(command):
+def create_command_file(command):
     directory = "sammicomandos"
-    
-    # Crear el directorio solo si no existe
     if not os.path.exists(directory):
         os.makedirs(directory)  # Crear el directorio si no existe
     filename = f"{directory}/{command[1:]}.txt"  # Eliminar el guion bajo
-    
-    # Solo crear el archivo si no existe
-    if not os.path.exists(filename):
-        with open(filename, 'w') as f:
-            f.write(f"Comando {command} ejecutado.")  # Guardar información en el archivo
-        print(f"Archivo creado: {filename}")
+    with open(filename, 'w') as f:
+        f.write(f"Comando {command} ejecutado.")  # Guardar información en el archivo
+    print(f"Archivo creado: {filename}")
 
 # Función para manejar el cliente de TikTok
 def tiktok_client_thread(tiktok_client):
@@ -180,7 +175,7 @@ if __name__ == "__main__":
                 for word in comment.split():
                     if word.startswith("_"):
                         if check_global_cooldown(word):
-                            create_file(word)  # Ejecutar el comando
+                            create_command_file(word)  # Ejecutar el comando
                         else:
                             print(f"Cooldown activo para {word}")
 
