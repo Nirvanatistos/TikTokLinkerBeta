@@ -184,7 +184,7 @@ if __name__ == "__main__":
                 
                 # Leer el comentario limpio con TTS si TTS está habilitado
                 if tts_enabled and cleaned_comment.strip():
-                    # Combina el nombre de usuario y el comentario para TTS
+                    # Modificación aquí para incluir el nombre de usuario
                     tts_message = f"{username} dijo: {cleaned_comment}"
                     engine.say(tts_message)
                     engine.runAndWait()
@@ -196,4 +196,3 @@ if __name__ == "__main__":
         root.mainloop()
     else:
         print("El archivo tiktokchannel.txt no se ha encontrado o está vacío.")
-
