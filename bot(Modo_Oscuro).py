@@ -82,7 +82,7 @@ def display_chat_window():
     chat_label.pack(pady=10, padx=10, anchor="w")
 
     # Crear el widget de texto para mostrar el chat
-    chat_display = tk.Text(chat_frame, wrap=tk.WORD, state=tk.DISABLED, bg="black", fg="white", font=("Arial Black", 12))
+    chat_display = tk.Text(chat_frame, wrap=tk.WORD, state=tk.DISABLED, bg="black", fg="white" , font=("Arial Black", 12))
     chat_display.pack(expand=True, fill=tk.BOTH)
 
     # Crear una fila adicional en la parte inferior
@@ -184,7 +184,9 @@ if __name__ == "__main__":
                 
                 # Leer el comentario limpio con TTS si TTS está habilitado
                 if tts_enabled and cleaned_comment.strip():
-                    engine.say(f"{username} dijo: {cleaned_comment}")  # Incluye el nombre de usuario
+                    # Modificación aquí para incluir el nombre de usuario
+                    tts_message = f"{username} dijo: {cleaned_comment}"
+                    engine.say(tts_message)
                     engine.runAndWait()
 
         client_thread = threading.Thread(target=tiktok_client_thread, args=(tiktok_client,))
@@ -194,4 +196,3 @@ if __name__ == "__main__":
         root.mainloop()
     else:
         print("El archivo tiktokchannel.txt no se ha encontrado o está vacío.")
-
