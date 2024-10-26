@@ -2,7 +2,7 @@
 
 Nombre del Programa: TikTok Linker (BETA)
 
-Versión: 1.0.1
+Versión: 1.3.2
 
 Condiciones de Uso:
 
