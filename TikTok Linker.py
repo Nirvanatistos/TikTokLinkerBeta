@@ -107,7 +107,7 @@ def display_chat_window():
                                command=lambda: toggle_tts(tts_button))
         tts_button.pack(side=tk.RIGHT, padx=10, pady=10)
 
-    return root, chat_display, add_chat_message
+    return root, chat_display, add_chat_message, tts_button
 
 # Función para alternar el modo
 def toggle_mode(button, root, chat_display, title_frame, chat_label, bottom_frame):
@@ -121,7 +121,7 @@ def toggle_mode(button, root, chat_display, title_frame, chat_label, bottom_fram
         bottom_frame.configure(bg="#121212")  # Cambiar fondo del marco inferior
         chat_display.tag_config("nickname", foreground="yellow") # Cambiar nickname a amarillo
         chat_display.tag_config("comment", foreground="white") # Cambiar comentario a blanco
-        button.config(bg="#FFFFFF", text="☀️")  # Botón morado con sol
+        button.config(bg="#FFFFFF", text="☀")  # Botón morado con sol
     else:
         root.configure(bg="white")  # Fondo claro
         chat_display.configure(bg="white", fg="black")  # Texto negro
@@ -138,6 +138,13 @@ def toggle_tts(button):
     tts_enabled = not tts_enabled
     button.config(text="Deshabilitar TTS" if tts_enabled else "Habilitar TTS", bg="lightcoral" if tts_enabled else "lightgreen")
 
+# Función para mostrar el estado "Cargando TTS"
+def loading_tts(button):
+    button.config(text="Cargando TTS", bg="lightyellow")  # Cambiar el texto y el color
+    time.sleep(5)  # Esperar 5 segundos
+    button.config(text="Habilitar TTS", bg="lightgreen")  # Cambiar el texto del botón a "Habilitar TTS"
+    button.config(state=tk.NORMAL)  # Habilitar el botón
+    
 # Función para verificar cooldown
 def check_global_cooldown(command):
     current_time = time.time()
@@ -198,7 +205,14 @@ if __name__ == "__main__":
         tiktok_client = TikTokLiveClient(unique_id=tiktok_username)
 
         # Crear la ventana del chat
-        root, chat_display, add_chat_message_func = display_chat_window()
+        root, chat_display, add_chat_message_func, tts_button = display_chat_window()
+        
+        # Deshabilitar el botón de TTS al inicio
+        tts_button.config(state=tk.DISABLED)
+
+        # Cargar TTS inicialmente
+        loading_thread = threading.Thread(target=loading_tts, args=(tts_button,))
+        loading_thread.start()  # Iniciar el hilo para mostrar "Cargando TTS"
 
         @tiktok_client.on(CommentEvent)
         async def on_comment(event: CommentEvent):
@@ -239,3 +253,4 @@ if __name__ == "__main__":
         root.mainloop()
     else:
         print("El archivo tiktokchannel.txt no se ha encontrado o está vacío.")
+
