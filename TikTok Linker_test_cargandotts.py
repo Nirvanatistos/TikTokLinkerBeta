@@ -121,7 +121,7 @@ def toggle_mode(button, root, chat_display, title_frame, chat_label, bottom_fram
         bottom_frame.configure(bg="#121212")  # Cambiar fondo del marco inferior
         chat_display.tag_config("nickname", foreground="yellow") # Cambiar nickname a amarillo
         chat_display.tag_config("comment", foreground="white") # Cambiar comentario a blanco
-        button.config(bg="#FFFFFF", text="☀️")  # Botón morado con sol
+        button.config(bg="#FFFFFF", text="☀")  # Botón morado con sol
     else:
         root.configure(bg="white")  # Fondo claro
         chat_display.configure(bg="white", fg="black")  # Texto negro
@@ -253,3 +253,4 @@ if __name__ == "__main__":
         root.mainloop()
     else:
         print("El archivo tiktokchannel.txt no se ha encontrado o está vacío.")
+
