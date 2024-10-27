@@ -7,6 +7,9 @@ import os
 import pygame
 import tkinter as tk
 
+# Variable global para controlar el estado del retraso
+delay_active = True
+
 # Inicializar Pygame y el motor de texto a voz
 pygame.mixer.init()
 engine = pyttsx3.init()
@@ -18,6 +21,16 @@ dark_mode = False  # Variable para manejar el modo oscuro
 # Diccionario para manejar el cooldown global de los comandos
 cooldowns = {}  # {comando: tiempo_cooldown}
 last_used_time = {}  # {comando: último tiempo usado}
+
+# Función para manejar el retraso inicial
+def disable_delay():
+    global delay_active
+    time.sleep(5)
+    delay_active = False
+
+# Iniciar un hilo para manejar el retraso de 5 segundos
+delay_thread = threading.Thread(target=disable_delay)
+delay_thread.start()
 
 # Función para cargar cooldowns desde un archivo
 def load_cooldowns():
@@ -54,7 +67,7 @@ def get_allowed_user():
         with open("tiktokchannel.txt", "r") as file:
             return file.read().strip().lower()
     except FileNotFoundError:
-        print("El archivo tiktokchannel.txt no se ha encontrado.")
+        print("El archivo tiktokchannel.txt no se ha encontrado. se creará uno nuevo. Recuerde insertar su usuario de tiktok con minúscula en él.")
         return None
 
 # Función para agregar texto al widget de chat
@@ -140,7 +153,7 @@ def toggle_tts(button):
 
 # Función para mostrar el estado "Cargando TTS"
 def loading_tts(button):
-    button.config(text="Cargando TTS", bg="lightyellow")  # Cambiar el texto y el color
+    button.config(text="Cargando TTS", bg="lightgray")  # Cambiar el texto y el color
     time.sleep(5)  # Esperar 5 segundos
     button.config(text="Habilitar TTS", bg="lightgreen")  # Cambiar el texto del botón a "Habilitar TTS"
     button.config(state=tk.NORMAL)  # Habilitar el botón
@@ -154,7 +167,7 @@ def check_global_cooldown(command):
         
         # Debugging para ver el tiempo transcurrido
         time_passed = current_time - last_used
-        print(f"Comando {command}: Ingresado a cooldown.")
+        print(f"{command}: Ingresado a cooldown.")
         
         if time_passed < cooldown_time:
             remaining_time = cooldown_time - time_passed
@@ -164,11 +177,15 @@ def check_global_cooldown(command):
     
     # Actualizar el tiempo de uso del comando
     last_used_time[command] = current_time
-    print(f"Ejecutando comando {command}")
+    print(f"Ejecutando comando: {command}")
     return True
 
 # Función para crear el archivo de comando
 def create_command_file(command):
+    global delay_active # Declara variable delay para espera de 5 segundos en la creación de archivos dentro de sammicomandos
+    if delay_active: # Verifica si el retraso está activo
+        return # No hace nada si el retraso está activo
+    
     directory = "sammicomandos"
     if not os.path.exists(directory):
         os.makedirs(directory)  # Crear el directorio si no existe
@@ -176,6 +193,10 @@ def create_command_file(command):
     with open(filename, 'w') as f:
         f.write(f"Comando {command} ejecutado.")  # Guardar información en el archivo
     print(f"Archivo creado: {filename}")
+    
+# Iniciar un hilo para manejar el retraso de 5 segundos
+delay_thread = threading.Thread(target=disable_delay)
+delay_thread.start()
 
 # Función para manejar el cliente de TikTok
 def tiktok_client_thread(tiktok_client):
@@ -231,10 +252,11 @@ if __name__ == "__main__":
                 # Procesar comandos (manejo de cooldown y ejecución)
                 for word in comment.split():
                     if word.startswith("_"):
-                        if check_global_cooldown(word):
-                            create_command_file(word)  # Ejecutar el comando
-                        else:
-                            print(f"Cooldown activo para {word}")
+                        if not delay_active:
+                            if check_global_cooldown(word):
+                                create_command_file(word)  # Ejecutar el comando
+                            else:
+                                print(f"Cooldown activo actualmente para {word}")
 
                 # Limpiar el comentario para TTS
                 cleaned_comment = remove_commands_for_tts(comment)
@@ -253,4 +275,6 @@ if __name__ == "__main__":
         root.mainloop()
     else:
         print("El archivo tiktokchannel.txt no se ha encontrado o está vacío.")
+
+
 
