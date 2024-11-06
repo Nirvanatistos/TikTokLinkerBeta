@@ -1,7 +1,10 @@
 import time
 import threading
 from TikTokLive import TikTokLiveClient
+from TikTokLive.events import FollowEvent
 from TikTokLive.events import CommentEvent
+from PIL import Image
+import io
 import pyttsx3
 import os
 import pygame
@@ -9,6 +12,14 @@ import tkinter as tk
 
 # Variable global para controlar el estado del retraso
 delay_active = True
+
+# Variable global para almacenar el último seguidor
+last_follower = ""
+
+# Lee el último seguidor desde lastfollower.txt si existe
+if os.path.exists("lastfollower.txt"):
+    with open("lastfollower.txt", "r") as file:
+        last_follower = file.read().strip()  # Leer y quitar espacios en blanco
 
 # Inicializar Pygame y el motor de texto a voz
 pygame.mixer.init()
@@ -267,6 +278,41 @@ if __name__ == "__main__":
                     tts_message = f"{username} dijo: {cleaned_comment}"
                     engine.say(tts_message)
                     engine.runAndWait()
+                    
+            @tiktok_client.on(FollowEvent)
+            async def on_follow(event: FollowEvent):
+                global last_follower  # Usamos una variable global para comparar
+                nickname = event.user.nickname
+                
+                # Verificar si lastfollower.txt existe, y si no, crearlo
+                if not os.path.exists("lastfollower.txt"):
+                    with open("lastfollower.txt", "w") as file:
+                        file.write("")  # Crear un archivo vacío si no existe
+                        
+                # Comprobar si el nuevo seguidor es diferente al último
+                if nickname != last_follower:
+                # Guardar el nickname en lastfollower.txt
+                    with open("lastfollower.txt", "w") as file:
+                        file.write(nickname)
+                    
+                    # Descargar la imagen de perfil del seguidor
+                    image_bytes: bytes = await tiktok_client.web.fetch_image(image=event.user.avatar_thumb)
+                
+                    # Convertir la imagen en un objeto PIL
+                    image = Image.open(io.BytesIO(image_bytes))
+                
+                    # Redimensionar la imagen a 215x215 píxeles
+                    image = image.resize((215, 215))
+                
+                    # Convertir y guardar la imagen como lastfollower.png
+                    image.save("lastfollower.png", format="PNG")
+                
+                    # Actualizar el último seguidor
+                    last_follower = nickname
+                
+                else:
+                    # Si es el mismo seguidor, no realizar las acciones de nuevo
+                    pass  # Puedes usar 'pass' aquí si no hay más acciones necesarias
 
         client_thread = threading.Thread(target=tiktok_client_thread, args=(tiktok_client,))
         client_thread.daemon = True
@@ -275,6 +321,3 @@ if __name__ == "__main__":
         root.mainloop()
     else:
         print("El archivo tiktokchannel.txt no se ha encontrado o está vacío.")
-
-
-
