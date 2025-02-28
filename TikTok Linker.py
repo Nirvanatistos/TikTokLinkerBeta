@@ -105,7 +105,7 @@ def add_chat_message(chat_display, message, nickname_color, text_color):
 def display_chat_window():
     root = tk.Tk()
     root.iconbitmap(filename)
-    root.title("TikTok Linker 2025 - By NirvanaRuns")
+    root.title("TikTok Linker Version 1.7.6 - por NirvanaRuns")
     root.geometry("600x800")  
     root.configure(bg="white")  
 
