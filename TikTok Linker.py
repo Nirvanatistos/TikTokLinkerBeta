@@ -9,6 +9,16 @@ import pyttsx3
 import os
 import pygame
 import tkinter as tk
+import urllib.request
+
+# Establecer el ícono directamente desde la URL de GitHub
+url = "https://raw.githubusercontent.com/Nirvanatistos/TikTokLinkerBeta/refs/heads/main/TikTok_Linker.ico"
+filename = "TikTok_Linker.ico"
+urllib.request.urlretrieve(url, filename)
+
+
+# Variable global para directorio sammicomandos
+directory = "sammicomandos"
 
 # Variable global para controlar el estado del retraso
 delay_active = True
@@ -18,7 +28,7 @@ last_follower = ""
 
 # Lee el último seguidor desde lastfollower.txt si existe
 if os.path.exists("lastfollower.txt"):
-    with open("lastfollower.txt", "r") as file:
+    with open("lastfollower.txt", "r", encoding="utf-8") as file:
         last_follower = file.read().strip()  # Leer y quitar espacios en blanco
 
 # Inicializar Pygame y el motor de texto a voz
@@ -36,17 +46,17 @@ last_used_time = {}  # {comando: último tiempo usado}
 # Función para manejar el retraso inicial
 def disable_delay():
     global delay_active
-    time.sleep(5)
+    time.sleep(3)
     delay_active = False
 
-# Iniciar un hilo para manejar el retraso de 5 segundos
+# Iniciar un hilo para manejar el retraso de 3 segundos
 delay_thread = threading.Thread(target=disable_delay)
 delay_thread.start()
 
 # Función para cargar cooldowns desde un archivo
 def load_cooldowns():
     try:
-        with open("cooldown.txt", "r") as f:
+        with open("cooldown.txt", "r", encoding="utf-8") as f:
             for line in f:
                 command, time_cd = line.strip().split(",")
                 time_cd = int(time_cd) * 60  # Convertir a segundos
@@ -57,7 +67,7 @@ def load_cooldowns():
 
 # Función para guardar cooldowns en un archivo
 def save_cooldowns():
-    with open("cooldown.txt", "w") as f:
+    with open("cooldown.txt", "w", encoding="utf-8") as f:
         for command, time_cd in cooldowns.items():
             f.write(f"{command},{time_cd // 60}\n")  # Guardar en minutos
 
@@ -68,14 +78,14 @@ seen_comments = set()
 def ensure_tiktokchannel_exists():
     filename = "tiktokchannel.txt"
     if not os.path.exists(filename):
-        with open(filename, "w") as file:
+        with open(filename, "w", encoding="utf-8") as file:
             file.write("tu_usuario_tiktok")  # Nombre de usuario de TikTok por defecto
 
 # Obtener el nombre de usuario permitido desde el archivo tiktokchannel.txt
 def get_allowed_user():
     ensure_tiktokchannel_exists()
     try:
-        with open("tiktokchannel.txt", "r") as file:
+        with open("tiktokchannel.txt", "r", encoding="utf-8") as file:
             return file.read().strip().lower()
     except FileNotFoundError:
         print("El archivo tiktokchannel.txt no se ha encontrado. se creará uno nuevo. Recuerde insertar su usuario de tiktok con minúscula en él.")
@@ -94,7 +104,8 @@ def add_chat_message(chat_display, message, nickname_color, text_color):
 # Función para manejar el chat en Tkinter
 def display_chat_window():
     root = tk.Tk()
-    root.title("TikTok Linker 2024 - By NirvanaRuns")
+    root.iconbitmap(filename)
+    root.title("TikTok Linker 2025 - By NirvanaRuns")
     root.geometry("600x800")  
     root.configure(bg="white")  
 
@@ -165,7 +176,7 @@ def toggle_tts(button):
 # Función para mostrar el estado "Cargando TTS"
 def loading_tts(button):
     button.config(text="Cargando TTS", bg="lightgray")  # Cambiar el texto y el color
-    time.sleep(5)  # Esperar 5 segundos
+    time.sleep(3)  # Esperar 3 segundos
     button.config(text="Habilitar TTS", bg="lightgreen")  # Cambiar el texto del botón a "Habilitar TTS"
     button.config(state=tk.NORMAL)  # Habilitar el botón
     
@@ -201,11 +212,11 @@ def create_command_file(command):
     if not os.path.exists(directory):
         os.makedirs(directory)  # Crear el directorio si no existe
     filename = f"{directory}/{command[1:]}.txt"  # Eliminar el guion bajo
-    with open(filename, 'w') as f:
+    with open(filename, 'w', encoding="utf-8") as f:
         f.write(f"Comando {command} ejecutado.")  # Guardar información en el archivo
     print(f"Archivo creado: {filename}")
     
-# Iniciar un hilo para manejar el retraso de 5 segundos
+# Iniciar un hilo para manejar el retraso de 3 segundos
 delay_thread = threading.Thread(target=disable_delay)
 delay_thread.start()
 
@@ -284,15 +295,35 @@ if __name__ == "__main__":
                 global last_follower  # Usamos una variable global para comparar
                 nickname = event.user.nickname
                 
+                # Ruta al archivo de base de datos
+                db_file = "lastfollowerdb.txt"
+                
+                # Verificar si lastfollower.db existe, y si no, crearlo
+                if not os.path.exists(db_file):
+                    with open(db_file, "w", encoding="utf-8") as file:
+                        file.write("")  # Crear un archivo vacío si no existe
+                        
+                # Leer la base de datos y verificar si el usuario ya está registrado
+                with open(db_file, "r", encoding="utf-8") as file:
+                    registered_users = file.read().splitlines()  # Leer usuarios registrados línea por línea
+                    
+                if nickname not in registered_users:  # Solo proceder si el usuario no está en la base de datos
+                    # Registrar el usuario en la base de datos
+                    with open(db_file, "a", encoding="utf-8") as file:  # Modo 'append' para agregar al final
+                        file.write(nickname + "\n")
+                
                 # Verificar si lastfollower.txt existe, y si no, crearlo
                 if not os.path.exists("lastfollower.txt"):
-                    with open("lastfollower.txt", "w") as file:
+                    with open("lastfollower.txt", "w", encoding="utf-8") as file:
                         file.write("")  # Crear un archivo vacío si no existe
                         
                 # Comprobar si el nuevo seguidor es diferente al último
                 if nickname != last_follower:
                 # Guardar el nickname en lastfollower.txt
-                    with open("lastfollower.txt", "w") as file:
+                    with open("lastfollower.txt", "w", encoding="utf-8") as file:
+                        file.write(nickname)
+                    file_path = os.path.join(directory, "lastfollower.txt")
+                    with open(file_path, "w", encoding="utf-8") as file:
                         file.write(nickname)
                     
                     # Descargar la imagen de perfil del seguidor
@@ -309,6 +340,14 @@ if __name__ == "__main__":
                 
                     # Actualizar el último seguidor
                     last_follower = nickname
+                    
+                    # Esperar 5 segundos y luego eliminar el archivo
+                    def delete_file_after_delay():
+                        time.sleep(5)  # Esperar 5 segundos
+                        if os.path.exists(file_path):
+                            os.remove(file_path)
+                     
+                    threading.Thread(target=delete_file_after_delay, daemon=True).start()
                 
                 else:
                     # Si es el mismo seguidor, no realizar las acciones de nuevo
