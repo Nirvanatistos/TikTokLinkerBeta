@@ -2,8 +2,6 @@
 
 Nombre del Programa: TikTok Linker (BETA)
 
-Versión: 1.3.2
-
 Condiciones de Uso:
 
 Este programa es software libre. Puedes usarlo, modificarlo y distribuirlo libremente, siempre que se mantenga esta licencia.
