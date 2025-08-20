@@ -1,0 +1,3 @@
+# Formato: _comando,max_usos,cooldown_minutos
+# Ejemplo: _desaparece,3,5 -> 3 veces cada 5 minutos
+# Ejemplo 2: _krool,-1,-1 -> hará que el comando no tenga límite de tiempo ni cant. de veces a ejecutar.
