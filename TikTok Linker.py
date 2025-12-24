@@ -184,7 +184,7 @@ def add_chat_message(chat_display, message, nickname_color, text_color):
 def display_chat_window():
     root = tk.Tk()
     root.iconbitmap(filename)
-    root.title("TikTok Linker Version 2.0 - por NirvanaRuns")
+    root.title("TikTok Linker Version 2.1 - por NirvanaRuns")
     root.geometry("600x800")
 
     # Crear el marco de chat
@@ -298,7 +298,7 @@ def on_closing():
     root.destroy()
 
 if __name__ == "__main__":
-    # ✅ Cargar comandos permitidos desde comandos.txt
+    # Cargar comandos permitidos desde comandos.txt
     ensure_comandos_file_exists()
     load_allowed_commands()
 
