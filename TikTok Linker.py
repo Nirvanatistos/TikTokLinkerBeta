@@ -5,7 +5,6 @@ warnings.filterwarnings("ignore", category=UserWarning)
 from TikTokLive import TikTokLiveClient
 from TikTokLive.events import FollowEvent
 from TikTokLive.events import CommentEvent
-from TikTokLive.events import GiftEvent
 from PIL import Image
 import io
 import pyttsx3
@@ -13,8 +12,6 @@ import os
 import pygame
 import tkinter as tk
 import urllib.request
-import queue
-tts_queue = queue.Queue()
 
 # Establecer el ícono directamente desde la URL de GitHub
 url = "https://raw.githubusercontent.com/Nirvanatistos/TikTokLinkerBeta/refs/heads/main/TikTok_Linker.ico  "
@@ -184,7 +181,7 @@ def add_chat_message(chat_display, message, nickname_color, text_color):
 def display_chat_window():
     root = tk.Tk()
     root.iconbitmap(filename)
-    root.title("TikTok Linker Version 2.1 - por NirvanaRuns")
+    root.title("TikTok Linker Version 2.0 - por NirvanaRuns")
     root.geometry("600x800")
 
     # Crear el marco de chat
@@ -298,7 +295,7 @@ def on_closing():
     root.destroy()
 
 if __name__ == "__main__":
-    # Cargar comandos permitidos desde comandos.txt
+    # ✅ Cargar comandos permitidos desde comandos.txt
     ensure_comandos_file_exists()
     load_allowed_commands()
 
@@ -316,24 +313,10 @@ if __name__ == "__main__":
             # Cargar TTS inicialmente
             loading_thread = threading.Thread(target=loading_tts, args=(tts_button,))
             loading_thread.start()
-            
-        # Hilo dedicado para TTS (seguro y thread-safe)
-            def tts_worker():
-                while True:
-                    message = tts_queue.get()
-                    if message is None:
-                        break
-                    engine.say(message)
-                    engine.runAndWait()
-                    tts_queue.task_done()
-
-            tts_thread = threading.Thread(target=tts_worker, daemon=True)
-            tts_thread.start()
 
         @tiktok_client.on(CommentEvent)
         async def on_comment(event: CommentEvent):
-            username = getattr(event.user_info, 'unique_id', 'unknown')
-            nickname = getattr(event.user_info, 'nickname', 'Anónimo')
+            username = event.user.unique_id
             comment = event.comment
             # Ajustar el color del apodo según el modo
             nickname_color = "red" if not dark_mode else "yellow"
@@ -341,7 +324,7 @@ if __name__ == "__main__":
             # Mostrar el comentario completo en el chat, incluyendo comandos
             if comment.strip() and comment not in seen_comments:
                 seen_comments.add(comment)
-                add_chat_message_func(chat_display, (nickname, comment), nickname_color=nickname_color, text_color=text_color)
+                add_chat_message_func(chat_display, (username, comment), nickname_color=nickname_color, text_color=text_color)
                 # Procesar comandos
                 for word in comment.split():
                     if word.startswith("_"):
@@ -357,19 +340,14 @@ if __name__ == "__main__":
                 cleaned_comment = remove_commands_for_tts(comment)
                 # Leer el comentario limpio con TTS si TTS está habilitado
                 if tts_enabled and cleaned_comment.strip():
-                    tts_message = f"{nickname} dijo: {cleaned_comment}"
-                    tts_queue.put(tts_message)
-                    #def speak():
-                        #engine.say(tts_message)
-                        #engine.runAndWait()
-                    #threading.Thread(target=speak, daemon=True).start()
+                    tts_message = f"{username} dijo: {cleaned_comment}"
+                    engine.say(tts_message)
+                    engine.runAndWait()
 
         @tiktok_client.on(FollowEvent)
         async def on_follow(event: FollowEvent):
             global last_follower
             nickname = event.user.nickname
-            if not nickname or nickname == 'None':
-                nickname = 'Amigue'
             # Ruta al archivo de base de datos
             db_file = "lastfollowerdb.txt"
             # Verificar si lastfollower.db existe, y si no, crearlo
@@ -396,7 +374,7 @@ if __name__ == "__main__":
                 with open(file_path, "w", encoding="utf-8") as file:
                     file.write(nickname)
                 # Descargar la imagen de perfil del seguidor
-                image_bytes = await tiktok_client.web.fetch_image(image=event.user.avatar_thumb)
+                image_bytes: bytes = await tiktok_client.web.fetch_image(image=event.user.avatar_thumb)
                 # Convertir la imagen en un objeto PIL
                 image = Image.open(io.BytesIO(image_bytes))
                 # Redimensionar la imagen a 215x215 píxeles
@@ -427,103 +405,14 @@ if __name__ == "__main__":
 
                 # Actualizar el último seguidor
                 last_follower = nickname
-                # --- Anunciar follow con TTS si está habilitado ---
-                if tts_enabled:
-                    tts_message = f"¡El usuario {nickname} ha dado follow al canal! ¡Muchas gracias!"
-                    tts_queue.put(tts_message)
-                    #def speak():
-                        #engine.say(tts_message)
-                        #engine.runAndWait()
-                    #threading.Thread(target=speak, daemon=True).start()
-                
                 # Esperar 5 segundos y luego eliminar el archivo
                 def delete_file_after_delay():
                     time.sleep(5)
                     if os.path.exists(file_path):
                         os.remove(file_path)
                 threading.Thread(target=delete_file_after_delay, daemon=True).start()
-                
             else:
                 pass  # Si es el mismo seguidor, no realizar las acciones de nuevo
-                
-        @tiktok_client.on(GiftEvent)
-        async def on_gift(event: GiftEvent):
-            # Determinar si es un regalo "final"
-            is_final_gift = False
-
-            if event.gift.streakable:
-                # Solo actuar si la racha terminó
-                if event.repeat_end == 1:
-                    is_final_gift = True
-            else:
-                # Regalos no streakables: siempre son finales
-                is_final_gift = True
-
-            if not is_final_gift:
-                return  # Ignorar si la racha aún continúa
-
-            # Calcular total en "moneditas" (diamantes)
-            total_diamonds = event.gift.diamond_count * event.repeat_count
-
-            # Rangos según tus especificaciones
-            if 1 <= total_diamonds <= 5:
-                gift_type = "smallgift"
-            elif 6 <= total_diamonds <= 15:
-                gift_type = "mediumgift"
-            elif total_diamonds >= 16:
-                gift_type = "biggift"
-            else:
-                return  # Donaciones de 0 diamantes (raro, pero seguro)
-
-            # --- Guardar nombre del donante ---
-            nickname = event.user.nickname
-            if not nickname or nickname == 'None':
-                nickname = 'Amigue'
-            with open("donationusername.txt", "w", encoding="utf-8") as f:
-                f.write(nickname)
-
-            # --- Guardar monto de la donación ---
-            with open("amountdonation.txt", "w", encoding="utf-8") as f:
-                f.write(str(total_diamonds))
-
-            # --- Descargar y guardar imagen del donante ---
-            try:
-                image_bytes = await tiktok_client.web.fetch_image(image=event.user.avatar_thumb)
-            except Exception as e:
-                print(f"Error descargando avatar del donante: {e}")
-                image_bytes = None
-
-            if image_bytes:
-                image = Image.open(io.BytesIO(image_bytes))
-                image = image.resize((215, 215))
-                # Guardar en raíz
-                image.save("donationprofile.png", format="PNG")
-
-                # Guardar copia numerada en sammicomandos/assets/img_users/
-                img_dir = os.path.join("sammicomandos", "assets", "img_users")
-                os.makedirs(img_dir, exist_ok=True)
-
-                existing_files = [f for f in os.listdir(img_dir) if f.endswith(".jpg") and f[:-4].isdigit()]
-                next_number = max([int(f[:-4]) for f in existing_files], default=0) + 1
-                new_filepath = os.path.join(img_dir, f"{next_number}.jpg")
-                image.convert("RGB").save(new_filepath, "JPEG", quality=95)
-
-            # --- Crear archivo de rango en sammicomandos ---
-            os.makedirs("sammicomandos", exist_ok=True)
-            range_file = os.path.join("sammicomandos", f"{gift_type}.txt")
-            with open(range_file, "w", encoding="utf-8") as f:
-                f.write(f"Donación de {nickname}: {total_diamonds} moneditas")
-
-            print(f" Donación procesada: {nickname} envió {total_diamonds} moneditas → {gift_type}.txt")
-            
-            # --- Anunciar donación con TTS si está habilitado ---
-            if tts_enabled:
-                tts_message = f"¡Llegó una nueva donación de {nickname} de {total_diamonds} moneditas! ¡Muchas gracias!"
-                tts_queue.put(tts_message)
-                #def speak():
-                    #engine.say(tts_message)
-                    #engine.runAndWait()
-                #threading.Thread(target=speak, daemon=True).start()
 
         # Iniciar el cliente de TikTok en un hilo
         client_thread = threading.Thread(target=tiktok_client_thread, args=(tiktok_client,))
